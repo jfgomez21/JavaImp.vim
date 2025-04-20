@@ -223,6 +223,7 @@ function! <SID>JavaImpAppendClass(cpath, relativeTo)
         " Add each matching file to the class index buffer.
         " The format of each entry will be akin to: org/apache/xerces/Bubba
         for l:filename in l:list
+            let l:filename = substitute(l:filename, "\\", "/", "g")
             let l:filename = substitute(l:filename, l:cpath, "", "g")
             call append(0, l:filename)
         endfor
@@ -308,15 +309,23 @@ function! <SID>JavaImpFormatList()
     let l:subdirectory = fnamemodify(l:currentLine, ":h") 
     let l:packageName = substitute(l:subdirectory, "/", ".", "g")
 
+    if l:packageName == "."
+        let l:packageName = ""
+    endif
+
     " -- get the class name 
     " this match string extracts the classname from a class path name
     " in other words, if you hand /javax/swing/JPanel.java, it would 
     " return in JPanel (as regexp var \1)
     let l:classExtensions = '\(\.class\|\.java\)'
-    let l:matchClassName = match(l:currentLine, '[\\/]\([\$0-9A-Za-z_]*\)'.classExtensions.'$')
+    let l:matchClassName = match(l:currentLine, '[\\/]\?\([\$0-9A-Za-z_]*\)'.classExtensions.'$')
     if l:matchClassName > -1
-        let l:matchClassName = l:matchClassName + 1 
         let l:className = strpart(l:currentLine, l:matchClassName)
+
+        if match(l:className, "/") == 0
+            let l:className = l:className[1:]
+        endif
+
         let l:className = substitute(l:className,  l:classExtensions, '', '')
 
 		" TODO: It'd be better if we could handle the importing of inner
@@ -326,7 +335,12 @@ function! <SID>JavaImpFormatList()
         " don't know if it will do anything useful, but at least it 
         " will be less incorrect than it was before
         let l:className = substitute(l:className, '\$', '.', 'g')
-        call setline(".", l:className." ".l:packageName.".".l:className)
+
+        if len(l:packageName)
+            call setline(".", l:className." ".l:packageName.".".l:className)
+        else
+            call setline(".", l:className." ".l:className)
+        endif
     else
         " if we didn't find something which looks like a class, we
         " blank out this line (sorting will pick this up later)
@@ -417,6 +431,12 @@ function! <SID>JavaImpInsert(verboseMode)
                 endif
             elseif (hasImport == 0)
                 let importLoc = 0
+	       
+                "if the current file has no package declaration and the fullClassName is
+                "in the default package, then no import is needed
+                if stridx(fullClassName, ".") == -1
+                    let importLoc = -1    
+                endif
             endif
 
             exec verbosity 'call append(importLoc, importLine)'

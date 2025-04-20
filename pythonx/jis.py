@@ -2,7 +2,7 @@ import vim
 import re
 
 class Sorter:
-    IMPORT_BEGIN = "^\s*import\s+" 
+    IMPORT_BEGIN = "^\\s*import\\s+" 
 
     def __init__(self):
         # Initialize lists
@@ -108,7 +108,7 @@ class Sorter:
     # imports.
     def _separateImports(self, importStatements):
         # Get list of Static Imports.
-        regexStaticImports = ["static\s+"]
+        regexStaticImports = ["static\\s+"]
         self._importStaticList = self._extractImportsGivenRegexList(importStatements, regexStaticImports)
 
         # Get list of Bottom Imports.
