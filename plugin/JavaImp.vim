@@ -910,12 +910,16 @@ function! <SID>JavaImpFile(doSplit)
                     if (a:doSplit == 1)
                         split
                     endif
-                    exec "edit " . f
+                    exec "tabe " . f
                     return
                 endif
             endif
         endwhile
-        echo "Can not find " . fullClassName . " in g:JavaImpPaths"
+        if exists("*JavaImpClassFinder")
+            call JavaImpClassFinder(fullClassName)
+        else
+            echo "Can not find " . fullClassName . " in g:JavaImpPaths"
+        endif
     endif
 endfunction
 
